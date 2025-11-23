@@ -21,7 +21,7 @@ rooms: Dict[str, Dict] = {}
 
 # Config: where User Service and Game Service live
 USER_SERVICE_URL = "http://localhost:8001"
-GAME_SERVICE_URL = "http://localhost:8003"  # Game Rules Service (will implement later)
+GAME_SERVICE_URL = "http://localhost:8003"
 
 # Request models
 class CreateRoomReq(BaseModel):
@@ -34,6 +34,11 @@ class JoinRoomReq(BaseModel):
 
 @app.post("/create_room")
 def create_room(req: CreateRoomReq):
+    # Check if room name already exists
+    for room_id, room in rooms.items():
+        if room["name"] == req.room_name:
+            raise HTTPException(status_code=400, detail="Room name already exists. Choose a different name.")
+    
     # verify user exists by calling User Service
     try:
         r = httpx.get(f"{USER_SERVICE_URL}/users/{req.creator}", timeout=3.0)
@@ -78,7 +83,6 @@ def join_room(req: JoinRoomReq):
         try:
             # best-effort notification to Game Service
             resp = httpx.post(f"{GAME_SERVICE_URL}/start", json=payload, timeout=5.0)
-            # if Game Service isn't up, we still allow join; log in server output
             if resp.status_code != 200:
                 print("Game Service returned non-200:", resp.status_code, resp.text)
         except Exception as e:
@@ -87,6 +91,48 @@ def join_room(req: JoinRoomReq):
         room["status"] = "playing"
 
     return {"room_id": req.room_id, "room": room}
+
+@app.post("/reset_room/{room_id}")
+def reset_room(room_id: str):
+    """Reset room after game ends - keep room but clear players"""
+    room = rooms.get(room_id)
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    room["players"] = []
+    room["status"] = "waiting"
+    return {"message": "Room reset", "room_id": room_id, "room": room}
+
+@app.delete("/room/{room_id}")
+def delete_room(room_id: str):
+    """Delete a room (called when game ends)"""
+    if room_id in rooms:
+        del rooms[room_id]
+        return {"message": "Room deleted", "room_id": room_id}
+    raise HTTPException(status_code=404, detail="Room not found")
+
+@app.post("/leave_room")
+def leave_room(req: JoinRoomReq):
+    """Remove a player from a room"""
+    room = rooms.get(req.room_id)
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    if req.username in room["players"]:
+        room["players"].remove(req.username)
+        
+        # If room is empty, delete it
+        if len(room["players"]) == 0:
+            del rooms[req.room_id]
+            return {"message": "Room deleted (empty)", "room_id": req.room_id}
+        
+        # If only one player left, set status back to waiting
+        if len(room["players"]) == 1:
+            room["status"] = "waiting"
+        
+        return {"message": "Left room", "room_id": req.room_id, "room": room}
+    
+    return {"message": "User not in room"}
 
 @app.get("/rooms")
 def list_rooms():
