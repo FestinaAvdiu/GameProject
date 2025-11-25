@@ -8,12 +8,22 @@
 
 # backend/room_service/main.py
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict
 import uuid
 import httpx
 
 app = FastAPI(title="Room Service")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # In-memory room storage
 # room_id -> {"name": str, "players": [username,...], "status": "waiting"/"playing"}

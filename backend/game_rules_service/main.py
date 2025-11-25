@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, List
 import json
@@ -6,13 +7,19 @@ import httpx
 
 app = FastAPI(title="Game Rules Service")
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 ROOM_SERVICE_URL = "http://localhost:8002"
 
 # In-memory storage
-# connections: room_id -> {username: WebSocket}
 connections: Dict[str, Dict[str, WebSocket]] = {}
-
-# games: room_id -> {round, moves, scores, players, current_turn}
 games: Dict[str, Dict] = {}
 
 class StartGameReq(BaseModel):
@@ -31,7 +38,7 @@ def start_game(req: StartGameReq):
         "round": 1,
         "moves": {},
         "scores": {req.players[0]: 0, req.players[1]: 0},
-        "current_turn": req.players[0],  # First player goes first
+        "current_turn": req.players[0],
         "status": "waiting_for_moves"
     }
     
@@ -41,19 +48,16 @@ def start_game(req: StartGameReq):
 async def websocket_endpoint(websocket: WebSocket, room_id: str, username: str):
     await websocket.accept()
     
-    # Store connection
     if room_id not in connections:
         connections[room_id] = {}
     connections[room_id][username] = websocket
     
-    # Notify other players
     await broadcast_to_room(room_id, {
         "type": "player_joined",
         "message": f"{username} joined the room",
         "username": username
     })
     
-    # If game exists and both players connected, start
     if room_id in games:
         game = games[room_id]
         if len(connections[room_id]) == 2:
@@ -63,14 +67,12 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, username: str):
                 "round": game["round"]
             })
             
-            # Tell first player it's their turn
             await send_to_player(room_id, game["current_turn"], {
                 "type": "your_turn",
                 "message": "It's your turn!",
                 "round": game["round"]
             })
             
-            # Tell second player to wait
             other_player = [p for p in game["players"] if p != game["current_turn"]][0]
             await send_to_player(room_id, other_player, {
                 "type": "waiting",
@@ -80,7 +82,6 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, username: str):
     
     try:
         while True:
-            # Receive message from client
             data = await websocket.receive_text()
             message = json.loads(data)
             
@@ -88,7 +89,6 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, username: str):
                 await handle_move(room_id, username, message.get("move"))
                 
     except WebSocketDisconnect:
-        # Clean up connection
         if room_id in connections and username in connections[room_id]:
             del connections[room_id][username]
         
@@ -99,13 +99,11 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, username: str):
         })
 
 async def handle_move(room_id: str, username: str, move: str):
-    """Process a player's move"""
     if room_id not in games:
         return
     
     game = games[room_id]
     
-    # Check if it's this player's turn
     if game["current_turn"] != username:
         await send_to_player(room_id, username, {
             "type": "error",
@@ -113,7 +111,6 @@ async def handle_move(room_id: str, username: str, move: str):
         })
         return
     
-    # Validate move
     if move not in ["rock", "paper", "scissors"]:
         await send_to_player(room_id, username, {
             "type": "error",
@@ -121,21 +118,17 @@ async def handle_move(room_id: str, username: str, move: str):
         })
         return
     
-    # Store the move
     game["moves"][username] = move
     
-    # Broadcast that player made a move (WITHOUT revealing what it was)
     await broadcast_to_room(room_id, {
         "type": "move_made",
         "message": f"{username} made their move",
         "username": username
     })
     
-    # Check if both players have moved
     if len(game["moves"]) == 2:
         await evaluate_round(room_id)
     else:
-        # Switch turn to other player
         other_player = [p for p in game["players"] if p != username][0]
         game["current_turn"] = other_player
         
@@ -145,7 +138,6 @@ async def handle_move(room_id: str, username: str, move: str):
         })
 
 async def evaluate_round(room_id: str):
-    """Determine round winner and update game state"""
     game = games[room_id]
     players = game["players"]
     moves = game["moves"]
@@ -153,7 +145,6 @@ async def evaluate_round(room_id: str):
     p1, p2 = players[0], players[1]
     move1, move2 = moves[p1], moves[p2]
     
-    # Determine winner
     winner = None
     if move1 == move2:
         result = "draw"
@@ -168,7 +159,6 @@ async def evaluate_round(room_id: str):
         game["scores"][p2] += 1
         result = f"{p2} wins"
     
-    # Send round result
     await broadcast_to_room(room_id, {
         "type": "round_result",
         "round": game["round"],
@@ -178,7 +168,6 @@ async def evaluate_round(room_id: str):
         "scores": game["scores"]
     })
     
-    # Check if game is over (best of 3 - first to 2 wins)
     if game["scores"][p1] == 2 or game["scores"][p2] == 2:
         overall_winner = p1 if game["scores"][p1] == 2 else p2
         await broadcast_to_room(room_id, {
@@ -189,20 +178,17 @@ async def evaluate_round(room_id: str):
         })
         game["status"] = "finished"
         
-        # Tell Room Service to reset the room status (keep room, clear players)
         try:
             httpx.post(f"{ROOM_SERVICE_URL}/reset_room/{room_id}", timeout=3.0)
             print(f"Room {room_id} reset for new game")
         except Exception as e:
             print(f"Could not reset room {room_id}: {e}")
         
-        # Clean up game data
         if room_id in games:
             del games[room_id]
         if room_id in connections:
             del connections[room_id]
     else:
-        # Start next round - first player goes first again
         game["round"] += 1
         game["moves"] = {}
         game["current_turn"] = players[0]
@@ -214,14 +200,12 @@ async def evaluate_round(room_id: str):
             "scores": game["scores"]
         })
         
-        # Tell first player it's their turn
         await send_to_player(room_id, players[0], {
             "type": "your_turn",
             "message": "It's your turn!",
             "round": game["round"]
         })
         
-        # Tell second player to wait
         await send_to_player(room_id, players[1], {
             "type": "waiting",
             "message": f"Waiting for {players[0]} to make their move...",
@@ -229,7 +213,6 @@ async def evaluate_round(room_id: str):
         })
 
 async def broadcast_to_room(room_id: str, message: dict):
-    """Send message to all players in a room"""
     if room_id not in connections:
         return
     
@@ -237,10 +220,9 @@ async def broadcast_to_room(room_id: str, message: dict):
         try:
             await ws.send_json(message)
         except:
-            pass  # Connection might be closed
+            pass
 
 async def send_to_player(room_id: str, username: str, message: dict):
-    """Send message to a specific player"""
     if room_id in connections and username in connections[room_id]:
         try:
             await connections[room_id][username].send_json(message)
@@ -249,7 +231,6 @@ async def send_to_player(room_id: str, username: str, message: dict):
 
 @app.get("/game/{room_id}")
 def get_game_state(room_id: str):
-    """Get current game state (for debugging)"""
     if room_id not in games:
         raise HTTPException(status_code=404, detail="Game not found")
     return games[room_id]
