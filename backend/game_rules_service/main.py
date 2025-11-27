@@ -64,7 +64,8 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, username: str):
             await broadcast_to_room(room_id, {
                 "type": "game_start",
                 "message": "Both players connected! Game starting...",
-                "round": game["round"]
+                "round": game["round"],
+                "players": game["players"]  # ✅ Added player names
             })
             
             await send_to_player(room_id, game["current_turn"], {
@@ -89,14 +90,37 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, username: str):
                 await handle_move(room_id, username, message.get("move"))
                 
     except WebSocketDisconnect:
+        print(f"WebSocket disconnect: {username} from room {room_id}")
+        
+        # Clean up connection first
         if room_id in connections and username in connections[room_id]:
             del connections[room_id][username]
-        
-        await broadcast_to_room(room_id, {
-            "type": "player_left",
-            "message": f"{username} disconnected",
-            "username": username
-        })
+            print(f"Removed {username} from connections. Remaining in room: {len(connections.get(room_id, {}))}")
+            
+            # Notify remaining players
+            await broadcast_to_room(room_id, {
+                "type": "player_left",
+                "message": f"{username} disconnected",
+                "username": username
+            })
+            
+            # Check if both players have left
+            if room_id in connections and len(connections[room_id]) == 0:
+                print(f"Both players left room {room_id}. Resetting...")
+                # Both players left, reset the room in Room Service
+                try:
+                    response = httpx.post(f"{ROOM_SERVICE_URL}/reset_room/{room_id}", timeout=3.0)
+                    print(f"✅ Room {room_id} reset successfully (status: {response.status_code})")
+                except Exception as e:
+                    print(f"❌ Could not reset room {room_id}: {e}")
+                
+                # Clean up game data (but room stays in Room Service)
+                if room_id in games:
+                    del games[room_id]
+                    print(f"Deleted game state for room {room_id}")
+                # Clean up empty connections dict
+                del connections[room_id]
+                print(f"Cleaned up connections dict for room {room_id}")
 
 async def handle_move(room_id: str, username: str, move: str):
     if room_id not in games:
@@ -178,16 +202,8 @@ async def evaluate_round(room_id: str):
         })
         game["status"] = "finished"
         
-        try:
-            httpx.post(f"{ROOM_SERVICE_URL}/reset_room/{room_id}", timeout=3.0)
-            print(f"Room {room_id} reset for new game")
-        except Exception as e:
-            print(f"Could not reset room {room_id}: {e}")
-        
-        if room_id in games:
-            del games[room_id]
-        if room_id in connections:
-            del connections[room_id]
+        # DON'T reset room yet - let players stay and view results
+        # Room will be reset when both players disconnect
     else:
         game["round"] += 1
         game["moves"] = {}

@@ -15,6 +15,7 @@ class GameClient:
         self.room_id = None
         self.websocket = None
         self.game_ended = False
+        self.should_prompt_move = False
         
     def register_user(self, username):
         """Register a new user"""
@@ -77,6 +78,11 @@ class GameClient:
                 
                 print(f"✅ Joined room: {room_id}")
                 print(f"👥 Players in room: {', '.join(players)}")
+                
+                # If only 1 player (you), show waiting message
+                if len(players) == 1:
+                    print("\n⏳ Waiting for another player to join...")
+                
                 return True
             else:
                 print(f"❌ Failed to join room: {response.json().get('detail', 'Unknown error')}")
@@ -110,6 +116,12 @@ class GameClient:
             async for message in self.websocket:
                 data = json.loads(message)
                 await self.handle_message(data)
+                
+                # Check if we should prompt for move
+                if self.should_prompt_move:
+                    self.should_prompt_move = False
+                    await self.prompt_move()
+                    
         except websockets.exceptions.ConnectionClosed:
             print("\n❌ Connection closed by server")
         except Exception as e:
@@ -128,7 +140,7 @@ class GameClient:
             
         elif msg_type == "your_turn":
             print(f"\n💭 {data['message']}")
-            await self.prompt_move()
+            self.should_prompt_move = True
             
         elif msg_type == "waiting":
             print(f"\n⏳ {data['message']}")
@@ -149,7 +161,6 @@ class GameClient:
             
         elif msg_type == "new_round":
             print(f"\n🔄 {data['message']}")
-            # Don't automatically prompt - wait for "your_turn" message
             
         elif msg_type == "game_over":
             print(f"\n{'='*50}")
@@ -159,18 +170,46 @@ class GameClient:
             for player, score in data['final_scores'].items():
                 print(f"  {player}: {score}")
             print(f"{'='*50}")
-            print("\n🔄 Returning to main menu...")
-            # Close websocket and return to menu
-            await self.websocket.close()
-            # Set flag to return to menu
+            
+            # Mark game as ended BEFORE showing prompt
+            # This prevents player_left messages from triggering another prompt
+            print("\n📌 Game finished!")
             self.game_ended = True
-            return
+            await self.prompt_leave_room()
             
         elif msg_type == "error":
             print(f"\n⚠️  {data['message']}")
             
         elif msg_type == "player_left":
+            # Ignore player_left messages if we're already in the leaving process
+            if self.game_ended:
+                return
+                
             print(f"\n👋 {data['message']}")
+            print(f"\n⚠️  Your opponent left the game.")
+            self.game_ended = True
+            await self.prompt_leave_room()
+    
+    async def prompt_leave_room(self):
+        """Ask user if they want to leave the room"""
+        loop = asyncio.get_event_loop()
+        choice = await loop.run_in_executor(None, self.get_leave_choice)
+        
+        if choice.lower() == 'y':
+            print("\n🔄 Leaving room...")
+            await self.websocket.close()
+        else:
+            print("\n✅ Staying in room. Waiting for next game or opponent...")
+            # Game is no longer marked as ended, so player_left can trigger new prompt
+            self.game_ended = False
+    
+    def get_leave_choice(self):
+        """Get yes/no choice from user"""
+        while True:
+            choice = input("\n❓ Do you want to leave the room? (y/n): ").strip().lower()
+            if choice in ['y', 'yes', 'n', 'no']:
+                return choice[0]  # Return 'y' or 'n'
+            print("❌ Please enter 'y' for yes or 'n' for no")
     
     async def prompt_move(self):
         """Prompt user to make a move"""
@@ -208,6 +247,7 @@ class GameClient:
         }
         await self.websocket.send(json.dumps(message))
         print(f"✅ You chose: {move}")
+        print(f"⏳ Waiting for opponent to make their move...")
 
 async def main():
     client = GameClient()
@@ -298,6 +338,7 @@ async def main():
         await client.connect_websocket()
         
         # After game ends, loop back to menu
+        print("\n🔄 Returning to main menu...")
 
 if __name__ == "__main__":
     try:

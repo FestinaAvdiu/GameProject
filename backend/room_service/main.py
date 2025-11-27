@@ -104,26 +104,26 @@ def join_room(req: JoinRoomReq):
 
 @app.post("/reset_room/{room_id}")
 def reset_room(room_id: str):
-    """Reset room after game ends - keep room but clear players"""
+    """Reset room after game ends - keep room but clear players for reuse"""
     room = rooms.get(room_id)
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     
     room["players"] = []
     room["status"] = "waiting"
-    return {"message": "Room reset", "room_id": room_id, "room": room}
+    return {"message": "Room reset and ready for new players", "room_id": room_id, "room": room}
 
 @app.delete("/room/{room_id}")
 def delete_room(room_id: str):
-    """Delete a room (called when game ends)"""
+    """Permanently delete a room (optional - for manual cleanup)"""
     if room_id in rooms:
         del rooms[room_id]
-        return {"message": "Room deleted", "room_id": room_id}
+        return {"message": "Room permanently deleted", "room_id": room_id}
     raise HTTPException(status_code=404, detail="Room not found")
 
 @app.post("/leave_room")
 def leave_room(req: JoinRoomReq):
-    """Remove a player from a room"""
+    """Remove a player from a room (room stays alive for reuse)"""
     room = rooms.get(req.room_id)
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -131,14 +131,9 @@ def leave_room(req: JoinRoomReq):
     if req.username in room["players"]:
         room["players"].remove(req.username)
         
-        # If room is empty, delete it
-        if len(room["players"]) == 0:
-            del rooms[req.room_id]
-            return {"message": "Room deleted (empty)", "room_id": req.room_id}
-        
-        # If only one player left, set status back to waiting
-        if len(room["players"]) == 1:
-            room["status"] = "waiting"
+        # Keep room alive but set status back to waiting
+        # This allows the room to be reused by new players
+        room["status"] = "waiting"
         
         return {"message": "Left room", "room_id": req.room_id, "room": room}
     
