@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rock Paper Scissors</string>
+    <string name="title_activity_main">Rock Paper Scissors</string>
+    <string name="package_name">com.game.rps</string>
+    <string name="custom_url_scheme">com.game.rps</string>
+</resources>

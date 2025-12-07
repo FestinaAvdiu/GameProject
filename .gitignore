@@ -26,3 +26,8 @@ Thumbs.db
 # Logs and cache
 *.log
 *.sqlite3
+
+# Mobile Client (Capacitor)
+clients/mobile_client/android/
+clients/mobile_client/node_modules/
+clients/mobile_client/package-lock.json

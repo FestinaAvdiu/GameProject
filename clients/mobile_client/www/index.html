@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors - Web Client</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Rock Paper Scissors</h1>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen active">
+            <div class="input-group">
+                <label for="usernameInput">Enter your username:</label>
+                <input type="text" id="usernameInput" placeholder="Your username">
+            </div>
+            <button onclick="login()">Login</button>
+            <div id="loginError"></div>
+        </div>
+
+        <!-- Menu Screen -->
+        <div id="menuScreen" class="screen">
+            <h2 style="text-align: center; margin-bottom: 20px;">Welcome, <span id="usernameDisplay"></span>!</h2>
+            <button onclick="showCreateRoom()">Create New Room</button>
+            <button onclick="showJoinRoom()">Join Room by ID</button>
+            <button onclick="showRoomList()">View Available Rooms</button>
+            <button class="secondary" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div id="createRoomScreen" class="screen">
+            <div class="input-group">
+                <label for="roomNameInput">Room Name:</label>
+                <input type="text" id="roomNameInput" placeholder="Enter room name">
+            </div>
+            <button onclick="createRoom()">Create Room</button>
+            <button class="secondary" onclick="showMenu()">Back</button>
+            <div id="createRoomError"></div>
+        </div>
+
+        <!-- Join Room Screen -->
+        <div id="joinRoomScreen" class="screen">
+            <div class="input-group">
+                <label for="roomIdInput">Room ID:</label>
+                <input type="text" id="roomIdInput" placeholder="Enter room ID">
+            </div>
+            <button onclick="joinRoomById()">Join Room</button>
+            <button class="secondary" onclick="showMenu()">Back</button>
+            <div id="joinRoomError"></div>
+        </div>
+
+        <!-- Room List Screen -->
+        <div id="roomListScreen" class="screen">
+            <h2 style="text-align: center; margin-bottom: 20px;">Available Rooms</h2>
+            <div id="roomList" class="room-list"></div>
+            <button onclick="showCreateRoom()">Create New Room</button>
+            <button class="secondary" onclick="showMenu()">Back</button>
+        </div>
+
+        <!-- Waiting Screen -->
+        <div id="waitingScreen" class="screen">
+            <h2 style="text-align: center;">Waiting for opponent...</h2>
+            <div class="status-message">
+                <p>Room ID: <strong><span id="currentRoomId"></span></strong></p>
+                <p>Share this ID with another player!</p>
+            </div>
+            <button class="secondary" onclick="leaveRoom()">Leave Room</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="status-message" id="gameStatus">Waiting...</div>
+            
+            <div class="scores">
+                <div class="score-item">
+                    <h3 id="player1Name">Player 1</h3>
+                    <div class="score" id="player1Score">0</div>
+                </div>
+                <div class="score-item">
+                    <h3 id="player2Name">Player 2</h3>
+                    <div class="score" id="player2Score">0</div>
+                </div>
+            </div>
+
+            <div id="movesContainer" class="moves-container" style="display: none;">
+                <button class="move-btn" onclick="makeMove('rock')">✊</button>
+                <button class="move-btn" onclick="makeMove('paper')">✋</button>
+                <button class="move-btn" onclick="makeMove('scissors')">✌️</button>
+            </div>
+
+            <div class="message-log" id="messageLog">
+                <!-- Messages will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

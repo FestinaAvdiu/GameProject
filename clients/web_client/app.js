@@ -52,6 +52,7 @@ function logout() {
     username = '';
     currentRoomId = '';
     if (ws) ws.close();
+    document.getElementById('usernameInput').value = ''; // Clear input field
     showScreen('loginScreen');
 }
 
@@ -60,10 +61,12 @@ function showMenu() {
 }
 
 function showCreateRoom() {
+    document.getElementById('roomNameInput').value = ''; // Clear previous room name
     showScreen('createRoomScreen');
 }
 
 function showJoinRoom() {
+    document.getElementById('roomIdInput').value = ''; // Clear previous room ID
     showScreen('joinRoomScreen');
 }
 

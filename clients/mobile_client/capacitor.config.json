@@ -1,0 +1,9 @@
+{
+  "appId": "com.game.rps",
+  "appName": "Rock Paper Scissors",
+  "webDir": "www",
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  }
+}
