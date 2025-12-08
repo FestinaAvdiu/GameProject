@@ -1,4 +1,4 @@
-# Distributed Two-Person Game System
+# Rock Paper Scissors - Distributed Two-Person Game System
 
 A distributed Rock-Paper-Scissors game implementation featuring a microservices architecture with WebSocket-based real-time gameplay. The system consists of three backend microservices and three client applications across different platforms.
 
@@ -886,4 +886,5 @@ Rooms are not deleted after games end - they are reset to "waiting" status. This
 ## License
 
 This project is developed as part of a university course assignment.
+
 
