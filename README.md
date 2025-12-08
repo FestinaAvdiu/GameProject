@@ -78,13 +78,13 @@ All microservices communicate with each other using REST APIs over HTTP.
 
 **Request:**
 ```http
-GET http://localhost:8001/users/alice
+GET http://localhost:8001/users/emma
 ```
 
 **Response (200 OK):**
 ```json
 {
-  "username": "alice"
+  "username": "emma"
 }
 ```
 
@@ -116,7 +116,7 @@ Content-Type: application/json
 
 {
   "room_id": "abc12345",
-  "players": ["alice", "bob"]
+  "players": ["emma", "john"]
 }
 ```
 
@@ -126,14 +126,14 @@ Content-Type: application/json
   "message": "Game initialized",
   "game": {
     "room_id": "abc12345",
-    "players": ["alice", "bob"],
+    "players": ["emma", "john"],
     "round": 1,
     "moves": {},
     "scores": {
-      "alice": 0,
-      "bob": 0
+      "emma": 0,
+      "john": 0
     },
-    "current_turn": "alice",
+    "current_turn": "emma",
     "status": "waiting_for_moves"
   }
 }
@@ -190,14 +190,14 @@ Clients use HTTP REST APIs for authentication and room management operations.
 **Request:**
 ```json
 {
-  "username": "alice"
+  "username": "emma"
 }
 ```
 
 **Response:**
 ```json
 {
-  "message": "User 'alice' logged in successfully"
+  "message": "User 'emma' logged in successfully"
 }
 ```
 
@@ -210,14 +210,14 @@ Clients use HTTP REST APIs for authentication and room management operations.
 **Request:**
 ```json
 {
-  "username": "alice"
+  "username": "emma"
 }
 ```
 
 **Response:**
 ```json
 {
-  "message": "User alice registered successfully"
+  "message": "User emma registered successfully"
 }
 ```
 
@@ -230,7 +230,7 @@ Clients use HTTP REST APIs for authentication and room management operations.
 **Response:**
 ```json
 {
-  "users": ["alice", "bob", "charlie"]
+  "users": ["emma", "john", "charlie"]
 }
 ```
 
@@ -245,8 +245,8 @@ Clients use HTTP REST APIs for authentication and room management operations.
 **Request:**
 ```json
 {
-  "room_name": "Alice's Game",
-  "creator": "alice"
+  "room_name": "Emma's Game",
+  "creator": "emma"
 }
 ```
 
@@ -255,8 +255,8 @@ Clients use HTTP REST APIs for authentication and room management operations.
 {
   "room_id": "abc12345",
   "room": {
-    "name": "Alice's Game",
-    "players": ["alice"],
+    "name": "Emma's Game",
+    "players": ["emma"],
     "status": "waiting"
   }
 }
@@ -272,7 +272,7 @@ Clients use HTTP REST APIs for authentication and room management operations.
 ```json
 {
   "room_id": "abc12345",
-  "username": "bob"
+  "username": "john"
 }
 ```
 
@@ -281,8 +281,8 @@ Clients use HTTP REST APIs for authentication and room management operations.
 {
   "room_id": "abc12345",
   "room": {
-    "name": "Alice's Game",
-    "players": ["alice", "bob"],
+    "name": "Emma's Game",
+    "players": ["emma", "john"],
     "status": "playing"
   }
 }
@@ -299,13 +299,13 @@ Clients use HTTP REST APIs for authentication and room management operations.
 {
   "rooms": {
     "abc12345": {
-      "name": "Alice's Game",
-      "players": ["alice"],
+      "name": "Emma's Game",
+      "players": ["emma"],
       "status": "waiting"
     },
     "def67890": {
-      "name": "Bob's Room",
-      "players": ["bob", "charlie"],
+      "name": "John's Room",
+      "players": ["john", "charlie"],
       "status": "playing"
     }
   }
@@ -322,7 +322,7 @@ Clients use HTTP REST APIs for authentication and room management operations.
 ```json
 {
   "room_id": "abc12345",
-  "username": "alice"
+  "username": "emma"
 }
 ```
 
@@ -332,7 +332,7 @@ Clients use HTTP REST APIs for authentication and room management operations.
   "message": "Left room",
   "room_id": "abc12345",
   "room": {
-    "name": "Alice's Game",
+    "name": "Emma's Game",
     "players": [],
     "status": "waiting"
   }
@@ -349,7 +349,7 @@ Real-time game communication happens through WebSocket connections to the Game R
 
 **Endpoint:** `ws://localhost:8003/ws/{room_id}/{username}`
 
-**Example:** `ws://localhost:8003/ws/abc12345/alice`
+**Example:** `ws://localhost:8003/ws/abc12345/emma`
 
 ---
 
@@ -402,8 +402,8 @@ All WebSocket messages use JSON format:
 ```json
 {
   "type": "player_joined",
-  "message": "alice joined the room",
-  "username": "alice"
+  "message": "emma joined the room",
+  "username": "emma"
 }
 ```
 
@@ -428,7 +428,7 @@ All WebSocket messages use JSON format:
   "type": "game_start",
   "message": "Both players connected! Game starting...",
   "round": 1,
-  "players": ["alice", "bob"]
+  "players": ["emma", "john"]
 }
 ```
 
@@ -477,8 +477,8 @@ All WebSocket messages use JSON format:
 ```json
 {
   "type": "waiting",
-  "message": "Waiting for alice to make their move...",
-  "current_player": "alice"
+  "message": "Waiting for emma to make their move...",
+  "current_player": "emma"
 }
 ```
 
@@ -501,8 +501,8 @@ All WebSocket messages use JSON format:
 ```json
 {
   "type": "move_made",
-  "message": "alice made their move",
-  "username": "alice"
+  "message": "emma made their move",
+  "username": "emma"
 }
 ```
 
@@ -529,14 +529,14 @@ All WebSocket messages use JSON format:
   "type": "round_result",
   "round": 1,
   "moves": {
-    "alice": "rock",
-    "bob": "scissors"
+    "emma": "rock",
+    "john": "scissors"
   },
-  "winner": "alice",
-  "result": "alice wins",
+  "winner": "emma",
+  "result": "emma wins",
   "scores": {
-    "alice": 1,
-    "bob": 0
+    "emma": 1,
+    "john": 0
   }
 }
 ```
@@ -546,7 +546,7 @@ All WebSocket messages use JSON format:
 - `round`: Round number that just completed
 - `moves`: Object mapping username to their move
 - `winner`: Username of round winner, or `null` for draw
-- `result`: Human-readable result (`"alice wins"`, `"bob wins"`, or `"draw"`)
+- `result`: Human-readable result (`"emma wins"`, `"john wins"`, or `"draw"`)
 - `scores`: Current game scores (first to 2 wins)
 
 **Sent When:**
@@ -572,8 +572,8 @@ All WebSocket messages use JSON format:
   "message": "Round 2 starting!",
   "round": 2,
   "scores": {
-    "alice": 1,
-    "bob": 0
+    "emma": 1,
+    "john": 0
   }
 }
 ```
@@ -599,11 +599,11 @@ All WebSocket messages use JSON format:
 ```json
 {
   "type": "game_over",
-  "message": "alice wins the game!",
-  "winner": "alice",
+  "message": "emma wins the game!",
+  "winner": "emma",
   "final_scores": {
-    "alice": 2,
-    "bob": 1
+    "emma": 2,
+    "john": 1
   }
 }
 ```
@@ -633,7 +633,7 @@ All WebSocket messages use JSON format:
 ```json
 {
   "type": "error",
-  "message": "Not your turn! Waiting for bob"
+  "message": "Not your turn! Waiting for john"
 }
 ```
 
@@ -659,8 +659,8 @@ All WebSocket messages use JSON format:
 ```json
 {
   "type": "player_left",
-  "message": "bob disconnected",
-  "username": "bob"
+  "message": "john disconnected",
+  "username": "john"
 }
 ```
 
@@ -684,34 +684,34 @@ All WebSocket messages use JSON format:
 Here's a complete game flow showing all WebSocket messages:
 
 ```
-1. Alice connects to WebSocket
-   → All: player_joined (alice)
+1. Emma connects to WebSocket
+   → All: player_joined (emma)
 
-2. Bob connects to WebSocket
-   → All: player_joined (bob)
-   → All: game_start (round 1, players: [alice, bob])
-   → Alice: your_turn
-   → Bob: waiting (current_player: alice)
+2. John connects to WebSocket
+   → All: player_joined (john)
+   → All: game_start (round 1, players: [emma, john])
+   → Emma: your_turn
+   → John: waiting (current_player: emma)
 
-3. Alice submits move: "rock"
-   → All: move_made (alice)
-   → Bob: your_turn
+3. Emma submits move: "rock"
+   → All: move_made (emma)
+   → John: your_turn
 
-4. Bob submits move: "scissors"
-   → All: move_made (bob)
-   → All: round_result (alice: rock, bob: scissors, winner: alice, scores: {alice: 1, bob: 0})
+4. John submits move: "scissors"
+   → All: move_made (john)
+   → All: round_result (emma: rock, john: scissors, winner: emma, scores: {emma: 1, john: 0})
    → All: new_round (round 2)
-   → Alice: your_turn
-   → Bob: waiting
+   → Emma: your_turn
+   → John: waiting
 
-5. Alice submits move: "paper"
-   → All: move_made (alice)
-   → Bob: your_turn
+5. Emma submits move: "paper"
+   → All: move_made (emma)
+   → John: your_turn
 
-6. Bob submits move: "rock"
-   → All: move_made (bob)
-   → All: round_result (alice: paper, bob: rock, winner: alice, scores: {alice: 2, bob: 0})
-   → All: game_over (winner: alice, final_scores: {alice: 2, bob: 0})
+6. John submits move: "rock"
+   → All: move_made (john)
+   → All: round_result (emma: paper, john: rock, winner: emma, scores: {emma: 2, john: 0})
+   → All: game_over (winner: emma, final_scores: {emma: 2, john: 0})
 
 7. Both players disconnect
    → Game Service calls Room Service: POST /reset_room/abc12345
@@ -862,7 +862,6 @@ Rooms are not deleted after games end - they are reset to "waiting" status. This
 - Reduced overhead of creating/destroying rooms
 - Players can use memorable room IDs
 
-
 ---
 
 ## Future Enhancements
@@ -886,5 +885,6 @@ Rooms are not deleted after games end - they are reset to "waiting" status. This
 ## License
 
 This project is developed as part of a university course assignment.
+
 
 
