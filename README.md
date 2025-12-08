@@ -37,29 +37,29 @@ This project demonstrates a modern distributed system architecture where multipl
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         CLIENTS                              │
-│  ┌──────────┐      ┌──────────┐      ┌──────────┐          │
-│  │   CLI    │      │   Web    │      │  Mobile  │          │
-│  │  Client  │      │  Client  │      │  Client  │          │
-│  └────┬─────┘      └────┬─────┘      └────┬─────┘          │
-└───────┼──────────────────┼──────────────────┼───────────────┘
+┌────────────────────────────────────────────────────────────┐
+│                         CLIENTS                            │
+│  ┌──────────┐       ┌──────────┐       ┌──────────┐        │
+│  │   CLI    │       │   Web    │       │  Mobile  │        │
+│  │  Client  │       │  Client  │       │  Client  │        │
+│  └────┬─────┘       └────┬─────┘       └────┬─────┘        │
+└───────┼──────────────────┼──────────────────┼──────────────┘
         │                  │                  │
-        │ HTTP (Auth/Room) │                  │
-        │ WebSocket (Game) │                  │
+        │                  │ HTTP (Auth/Room) │
+        │                  │ WebSocket (Game) │
         │                  │                  │
-┌───────┴──────────────────┴──────────────────┴───────────────┐
-│                    MICROSERVICES                             │
-│                                                               │
+┌───────┴──────────────────┴──────────────────┴──────────────┐
+│                    MICROSERVICES                           │
+│                                                            │
 │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐       │
-│  │    User     │◄──┤    Room     │◄──┤    Game     │       │
+│  │    User     │   │    Room     │   │    Game     │       │
 │  │   Service   │   │   Service   │   │    Rules    │       │
 │  │             │   │             │   │   Service   │       │
 │  │  Port 8001  │   │  Port 8002  │   │  Port 8003  │       │
 │  └─────────────┘   └─────────────┘   └─────────────┘       │
-│         │                  │                  │              │
-│         └──────HTTP────────┴──────HTTP────────┘              │
-└───────────────────────────────────────────────────────────────┘
+│         │                  │                  │            │
+│         └──────HTTP────────┴──────HTTP────────┘            │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -862,15 +862,6 @@ Rooms are not deleted after games end - they are reset to "waiting" status. This
 - Reduced overhead of creating/destroying rooms
 - Players can use memorable room IDs
 
----
-
-## Known Limitations
-
-- **No Persistent Storage:** All data is stored in memory (resets on service restart)
-- **No Authentication:** Simple username-based system without passwords
-- **No Session Management:** Users can log in from multiple devices simultaneously
-- **Single Game Type:** Only Rock-Paper-Scissors is implemented
-- **No Reconnection Handling:** Players who disconnect lose their game state
 
 ---
 
@@ -895,3 +886,4 @@ Rooms are not deleted after games end - they are reset to "waiting" status. This
 ## License
 
 This project is developed as part of a university course assignment.
+
