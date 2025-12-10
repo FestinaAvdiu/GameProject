@@ -6,7 +6,6 @@ A distributed Rock-Paper-Scissors game implementation featuring a microservices 
 
 This project demonstrates a modern distributed system architecture where multiple microservices communicate via HTTP, while clients connect through WebSocket for real-time game interactions. Players can create rooms, join games, and play Rock-Paper-Scissors in a turn-based format with best-of-three scoring.
 
----
 
 ## Technology Summary
 
@@ -15,8 +14,17 @@ This project demonstrates a modern distributed system architecture where multipl
 | Service | Technology | Port | Description |
 |---------|-----------|------|-------------|
 | **User Service** | Python (FastAPI 0.109.0) | 8001 | User authentication and management |
-| **Room Service** | Python (FastAPI 0.109.0) | 8002 | Game room creation and player matching |
-| **Game Rules Service** | Python (FastAPI 0.109.0) | 8003 | Game logic and WebSocket communication |
+| **Room Service** | Python (FastAPI 0.109.0) | 8002 | Game room creation, player matching and managing their status |
+| **Game Rules Service** | Python (FastAPI 0.109.0) | 8003 | Game logic and WebSocket communication, move control, win conditions, turn switching |
+
+
+**Data Storage:**
+- **Type:** In-memory storage (no external database)
+- **Implementation:** Python dictionaries (hashmaps)
+- **User Service:** Stores user data in `users` dictionary
+- **Room Service:** Stores room data in `rooms` dictionary
+- **Game Rules Service:** Stores game state in `games` dictionary and WebSocket connections in `connections` dictionary
+- **Persistence:** Data is lost on service restart (no persistent storage)
 
 **Additional Backend Dependencies:**
 - `uvicorn==0.27.0` - ASGI server
@@ -32,7 +40,6 @@ This project demonstrates a modern distributed system architecture where multipl
 | **Web Client** | HTML5, CSS3, JavaScript (Vanilla) | Browser-based application with responsive UI |
 | **Mobile Client** | Capacitor 6.x (Android) | Hybrid mobile app wrapping the web client |
 
----
 
 ## Architecture Overview
 
@@ -62,7 +69,7 @@ This project demonstrates a modern distributed system architecture where multipl
 └────────────────────────────────────────────────────────────┘
 ```
 
----
+
 
 ## Service-to-Service APIs (HTTP)
 
@@ -181,7 +188,7 @@ POST http://localhost:8002/reset_room/abc12345
 
 Clients use HTTP REST APIs for authentication and room management operations.
 
-### User Service Endpoints
+### - User Service Endpoints
 
 #### `POST /users/login`
 
@@ -236,7 +243,7 @@ Clients use HTTP REST APIs for authentication and room management operations.
 
 ---
 
-### Room Service Endpoints
+### - Room Service Endpoints
 
 #### `POST /create_room`
 
@@ -868,7 +875,7 @@ Rooms are not deleted after games end - they are reset to "waiting" status. This
 
 - Add persistent database storage (PostgreSQL/MongoDB)
 - Implement JWT-based authentication
-- Add multiple game types (Tic-Tac-Toe, Connect Four, etc.)
+- Add multiple game types
 - Implement game history and statistics
 - Add spectator mode for watching ongoing games
 - Implement reconnection handling
@@ -880,11 +887,10 @@ Rooms are not deleted after games end - they are reset to "waiting" status. This
 
 - Festina Avdiu - University of Pécs, Computer Science Engineering
 
----
-
 ## License
 
 This project is developed as part of a university course assignment.
+
 
 
 
